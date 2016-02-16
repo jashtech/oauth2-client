@@ -4,7 +4,7 @@ namespace League\OAuth2\Client\Provider;
 
 use Closure;
 use Guzzle\Http\Exception\BadResponseException;
-use Guzzle\Service\Client as GuzzleClient;
+use GuzzleHttp\Client as GuzzleClient;
 use League\OAuth2\Client\Exception\IDPException as IDPException;
 use League\OAuth2\Client\Grant\GrantInterface;
 use League\OAuth2\Client\Token\AccessToken as AccessToken;
@@ -54,7 +54,7 @@ abstract class AbstractProvider implements ProviderInterface
             }
         }
 
-        $this->setHttpClient(new GuzzleClient());
+        $this->setHttpClient(new GuzzleClient(array('verify' => false)));
     }
 
     public function setHttpClient(GuzzleClient $client)
@@ -167,7 +167,7 @@ abstract class AbstractProvider implements ProviderInterface
             'client_id'     => $this->clientId,
             'client_secret' => $this->clientSecret,
             'redirect_uri'  => $this->redirectUri,
-            'grant_type'    => $grant,
+            'grant_type'    => (string)$grant,
         ];
 
         $requestParams = $grant->prepRequestParams($defaultParams, $params);
@@ -178,15 +178,13 @@ abstract class AbstractProvider implements ProviderInterface
                     // @codeCoverageIgnoreStart
                     // No providers included with this library use get but 3rd parties may
                     $client = $this->getHttpClient();
-                    $client->setBaseUrl($this->urlAccessToken() . '?' . $this->httpBuildQuery($requestParams, '', '&'));
-                    $request = $client->get(null, null, $requestParams)->send();
+                    $request = $client->get($this->urlAccessToken(), array('form_params' => $requestParams));
                     $response = $request->getBody();
                     break;
                     // @codeCoverageIgnoreEnd
                 case 'POST':
                     $client = $this->getHttpClient();
-                    $client->setBaseUrl($this->urlAccessToken());
-                    $request = $client->post(null, null, $requestParams)->send();
+                    $request = $client->post($this->urlAccessToken(), array('form_params' => $requestParams));
                     $response = $request->getBody();
                     break;
                 // @codeCoverageIgnoreStart
@@ -318,13 +316,12 @@ abstract class AbstractProvider implements ProviderInterface
     {
         try {
             $client = $this->getHttpClient();
-            $client->setBaseUrl($url);
 
             if ($this->headers) {
                 $client->setDefaultOption('headers', $this->headers);
             }
 
-            $request = $client->get()->send();
+            $request = $client->get($url);
             $response = $request->getBody();
         } catch (BadResponseException $e) {
             // @codeCoverageIgnoreStart
