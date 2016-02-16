@@ -6,7 +6,7 @@ use League\OAuth2\Client\Entity\User;
 
 class Facebook extends AbstractProvider
 {
-    public $scopes = ['offline_access', 'email', 'read_stream'];
+    public $scopes = array('offline_access', 'email', 'read_stream');
     public $responseType = 'string';
 
     public function urlAuthorize()
@@ -27,8 +27,7 @@ class Facebook extends AbstractProvider
     public function userDetails($response, \League\OAuth2\Client\Token\AccessToken $token)
     {
         $client = $this->getHttpClient();
-        $client->setBaseUrl('https://graph.facebook.com/me/picture?type=normal&access_token='.$token->accessToken);
-        $request = $client->get()->send();
+        $request = $client->get('https://graph.facebook.com/me/picture?type=normal&access_token='.$token->accessToken);
         $info = $request->getInfo();
         $imageUrl = $info['url'];
 
@@ -40,7 +39,7 @@ class Facebook extends AbstractProvider
         $description = (isset($response->bio)) ? $response->bio : null;
         $imageUrl = ($imageUrl) ?: null;
 
-        $user->exchangeArray([
+        $user->exchangeArray(array(
             'uid' => $response->id,
             'nickname' => $username,
             'name' => $response->name,
@@ -50,8 +49,8 @@ class Facebook extends AbstractProvider
             'location' => $location,
             'description' => $description,
             'imageurl' => $imageUrl,
-            'urls' => [ 'Facebook' => $response->link ],
-        ]);
+            'urls' => array('Facebook' => $response->link),
+        ));
 
         return $user;
     }
@@ -68,6 +67,6 @@ class Facebook extends AbstractProvider
 
     public function userScreenName($response, \League\OAuth2\Client\Token\AccessToken $token)
     {
-        return [$response->first_name, $response->last_name];
+        return array($response->first_name, $response->last_name);
     }
 }
